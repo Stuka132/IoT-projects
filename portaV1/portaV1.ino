@@ -2,6 +2,7 @@
 #include <SPI.h>        // RC522 Module uses SPI protocol
 #include <MFRC522.h>  // Library for Mifare RC522 Devices
 
+
 #define COMMON_ANODE
 
 #ifdef COMMON_ANODE
@@ -12,7 +13,22 @@
 #define LED_OFF LOW
 #endif
 
-constexpr uint8_t ledpin = 27;   //pino do led
+
+
+struct Pessoa{
+  String nome;
+  byte ID[4];
+};
+
+//uint8_t NmaxPessoa = 6; //numero maximo de pessoas
+//Pessoa pessoas[NmaxPessoa];
+
+//uint8_t numPessoas = 0;
+constexpr uint8_t ledpinG = 27;   //pino do led verde
+constexpr uint8_t ledpinR = 26;   //pino do led vermelho
+constexpr uint8_t ledpinB = 14;   //pino do led vermelho
+constexpr uint8_t pinMovmodulo = 36; // pino do modulo de movimento
+constexpr uint8_t pinDadosPorta = 25; // pino do dados da porta/reler
 
 byte readCard[4];   // Stores scanned ID read from RFID Module
 
@@ -27,14 +43,21 @@ void setup() {
   Serial.begin(9600);  // Initialize serial communications with PC
   SPI.begin();           // MFRC522 Hardware uses SPI protocol
   mfrc522.PCD_Init();    // Initialize MFRC522 Hardware
-  pinMode(27, OUTPUT);
-}
 
+  pinMode(ledpinR, OUTPUT);
+  pinMode(ledpinG, OUTPUT);
+  pinMode(ledpinB, OUTPUT);
+  pinMode(pinDadosPorta, OUTPUT);
+  pinMode(pinMovmodulo, INPUT);
+  digitalWrite(ledpinR, HIGH);
+  digitalWrite(ledpinB, HIGH);
+  digitalWrite(ledpinG, HIGH);
+}
 
 ///////////////////////////////////////// Main Loop ///////////////////////////////////
 void loop () {
   getID();
-  
+
 }
 
 ///////////////////////////////////////// Get PICC's UID ///////////////////////////////////
@@ -46,18 +69,49 @@ uint8_t getID() {
   if ( !mfrc522.PICC_ReadCardSerial()) {   //Since a PICC placed get Serial and continue
     return 0;
   }
-  // There are Mifare PICCs which have 4 byte or 7 byte UID care if you use 7 byte PICC
-  // I think we should assume every PICC as they have 4 byte UID
-  // Until we support 7 byte PICCs
-  Serial.println(F("UID do chip lido:"));
+  //Serial.println(F("UID do chip lido:"));
   for ( uint8_t i = 0; i < 4; i++) {  //
     readCard[i] = mfrc522.uid.uidByte[i];
-    Serial.print(readCard[i], HEX);
+    //Serial.println(readCard[i], HEX);
+    //nova.ID[i] = readCard[i];
+  }
+  Serial.print("bem Vindo ");
+  //Serial.print(nova.nome);
+  Serial.print(" seu id é ");
+  for(uint8_t i=0;i<4;i++){
+    //Serial.print(nova.ID[i], HEX);
   }
   Serial.println("");
-  digitalWrite(ledpin, HIGH);
-  delay(2000);
-  digitalWrite(ledpin, LOW);
-  //mfrc522.PICC_HaltA(); // Stop reading
+  abrePorta();
   return 1;
 }
+void abrePorta(){
+  Serial.println("porta aberta");
+  digitalWrite(pinDadosPorta,HIGH);
+  digitalWrite(ledpinG, LOW);
+  delay(3330);
+  digitalWrite(ledpinG, HIGH);
+
+  digitalWrite(ledpinB, LOW);
+  delay(3330);
+  digitalWrite(ledpinB, HIGH);
+
+  digitalWrite(ledpinR, LOW);
+  delay(3330);
+  digitalWrite(ledpinR, HIGH);
+
+  delay(100);
+  Serial.println("porta fechada");
+  digitalWrite(pinDadosPorta, LOW);
+}
+/*
+void cadastrarPessoa(String nome, byte* ID) {
+  if (numPessoas < NmaxPessoa) {
+    //pessoas[numPessoas].nome = nome;
+    for (uint8_t i = 0; i < 4; i++) {
+      pessoas[numPessoas].ID[i] = ID[i];
+    }
+    numPessoas++;
+  }
+}
+*/
